@@ -1,0 +1,40 @@
+name: Daily internship scrape
+
+on:
+  schedule:
+    # 03:00 UTC = 08:30 IST every day
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scrapers
+        run: python run_all.py
+        continue-on-error: true   # a scraper breaking shouldn't block the dashboard rebuild
+
+      - name: Rebuild dashboard
+        run: python generate_dashboard.py
+
+      - name: Commit updated data + dashboard
+        run: |
+          git config user.name "internship-radar-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ docs/
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Daily update: $(date -u +'%Y-%m-%d')"
+          git push

@@ -1,0 +1,17 @@
+{
+  "_readme": "Add any startup/company careers page URL here. The watchlist scraper checks each page for internship-related keywords and flags NEW pages or CHANGED content since the last run. It won't parse full job details like Internshala does (every startup site is structured differently) - it just tells you 'this page mentions an internship now, go look'. Remove the _readme key's effect is none, it's ignored by the scraper.",
+  "companies": [
+    {
+      "name": "Zerodha",
+      "careers_url": "https://zerodha.com/careers/"
+    },
+    {
+      "name": "Razorpay",
+      "careers_url": "https://razorpay.com/jobs/"
+    },
+    {
+      "name": "Postman",
+      "careers_url": "https://www.postman.com/company/careers/"
+    }
+  ]
+}
