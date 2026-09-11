@@ -1,3 +1,4 @@
+import re
 import time
 import logging
 import requests
@@ -31,19 +32,13 @@ def polite_get(url, session=None, retries=3):
 
 
 def extract_stipend_number(stipend_text: str) -> int:
-    """'₹ 10,000-15,000 /month' -> 10000 (take the lower bound). Unpaid/Negotiable -> 0."""
+    """'₹ 10,000-15,000 /month' -> 10000 (take the lower bound). Unpaid/Negotiable -> 0.
+    Commas are thousands separators within a number ('6,000'), not breaks
+    between numbers - strip them before splitting on non-digit runs."""
     if not stipend_text:
         return 0
-    digits = ""
-    numbers = []
-    for ch in stipend_text:
-        if ch.isdigit():
-            digits += ch
-        elif digits:
-            numbers.append(int(digits))
-            digits = ""
-    if digits:
-        numbers.append(int(digits))
+    cleaned = stipend_text.replace(",", "")
+    numbers = [int(n) for n in re.findall(r"\d+", cleaned)]
     return numbers[0] if numbers else 0
 
 

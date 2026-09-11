@@ -6,7 +6,10 @@ enabled you just get a URL that's fresh every morning.
 """
 import json
 import os
-from datetime import datetime, timezone, date
+import re
+from datetime import datetime, timezone, date, timedelta
+
+from dateutil import parser as dateutil_parser
 
 from config.settings import DOCS_DIR, DEADLINE_WARNING_DAYS
 from storage import load_internships, load_applications
@@ -330,16 +333,22 @@ render();
 
 
 def _parse_deadline_to_iso(apply_by_text: str):
-    """Internshala deadlines are like '15 Sep 2026'. Best-effort parse;
-    returns None if unparseable so the dashboard just shows 'Unknown'."""
-    if not apply_by_text or apply_by_text.lower() in ("unknown", "not specified", ""):
+    """Deadlines come from free text like 'August 28', '28 Aug', or
+    '28 Aug 2026' - dateutil's fuzzy parser handles all of these. When no
+    year is given it defaults to the current year; if that lands more
+    than a month in the past (meaning it actually meant next year), we
+    roll forward one year."""
+    if not apply_by_text or apply_by_text.strip().lower() in ("unknown", "not specified", ""):
         return None
-    for fmt in ("%d %b %Y", "%d %B %Y", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(apply_by_text, fmt).date().isoformat()
-        except ValueError:
-            continue
-    return None
+    cleaned = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", apply_by_text, flags=re.IGNORECASE)
+    try:
+        parsed = dateutil_parser.parse(cleaned, fuzzy=True, default=datetime(date.today().year, 1, 1))
+    except (ValueError, OverflowError):
+        return None
+    parsed_date = parsed.date()
+    if parsed_date < date.today() - timedelta(days=30):
+        parsed_date = parsed_date.replace(year=parsed_date.year + 1)
+    return parsed_date.isoformat()
 
 
 def build():

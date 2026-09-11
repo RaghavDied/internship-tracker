@@ -62,3 +62,13 @@ REQUEST_HEADERS = {
 
 REQUEST_TIMEOUT = 20  # seconds
 REQUEST_DELAY = 1.5   # seconds between requests, be polite to the site
+
+# Internshala's search-results cards don't carry a labelled "deadline"
+# field - it only shows up as a phrase like "can apply by 28 Aug" inside
+# a listing's own detail page. To get it, we fetch the detail page for
+# listings we haven't seen before (existing ones already have whatever
+# deadline we captured the first time). This adds one extra request per
+# NEW listing, capped below so a big backlog day doesn't turn into a
+# multi-hour run.
+FETCH_DEADLINE_DETAIL = True
+MAX_DETAIL_FETCHES_PER_RUN = 150
